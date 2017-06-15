@@ -1,0 +1,351 @@
+---
+title: "Présentation du package 'dplyr' et de l'opérateur '%>%' (pipe)"
+author: "Bastien Tran - Doctorant UVSQ"
+date: "12 juin 2017"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Le package "dplyr"
+
+__Title__ A Grammar of Data Manipulation
+
+__Description__ A fast, consistent tool for working with data frame like objects,
+both in memory and out of memory.
+
+__Author__ Hadley Wickham [aut, cre],
+Romain Francois [aut],
+Lionel Henry [aut],
+Kirill Müller [aut],
+RStudio [cph, fnd]
+
+__URL__ http://dplyr.tidyverse.org, https://github.com/tidyverse/dplyr
+
+\footnotesize
+Hadley Wickham, Romain Francois, Lionel Henry and Kirill Müller (2017). dplyr: A Grammar of Data Manipulation.
+
+https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/data-transformation-cheatsheet.pdf
+
+https://www.rstudio.com/wp-content/uploads/2016/01/data-wrangling-french.pdf
+
+## Installation
+
+```{r github, echo = TRUE, eval=FALSE}
+devtools::install_github("tidyverse/dplyr")
+```
+
+...ou bien sûr: 
+
+```{r cran, echo= TRUE, eval=FALSE}
+install.packages("dplyr")
+```
+
+__Version__ 0.7.0
+
+__Depends__ R (>= 3.1.2)
+
+__Imports__ assertthat, _bindrcpp_, glue, _magrittr_, methods, pkgconfig,
+rlang (>= 0.1), R6, _Rcpp_ (>= 0.12.6), _tibble_ (>= 1.3.1), utils
+
+__LinkingTo__ Rcpp (>= 0.12.0), BH (>= 1.58.0-1), bindrcpp, plogr
+
+## ??tidyverse
+
+> Le tidyverse est un jeu de packages partageant une même philosophie et conçus pour travailler ensemble.
+
+Le package _dplyr_ en fait partie, tout comme _readr_, _tidyr_, _purrr_ et _ggplot2_, ainsi que _tibble_ et _magrittr_ que nous aborderons plus loin.
+
+Cet écosytème est complété par une douzaine d'autres packages pour notamment:
+
+* Travailler avec certains types de vecteurs (_hms_, _stringr_, _lubridate_ & _forcats_)
+  
+* Importer des données depuis diverses sources (_feather_, _haven_, _httr_, _jsonlite_, _readxl_, _rvest_, _xml2_)
+
+* Modeliser (_modelr_, _broom_)
+
+\footnotesize
+http://tidyverse.org/
+
+## Paradigme de dplyr
+
+> "A fast, consistent tool for working with data frame like objects..."
+
+__dplyr__ propose un jeu de _verbes_ qui constituent une "grammaire de la manipulation de données" pour notamment:
+
+* construire de nouvelles variables à partir des variables existantes avec _mutate()_
+* sélectionner des variables via leurs noms avec _select()_
+* filtrer des enregistrements via leurs valeurs avec _filter()_
+* résumer plusieurs valeurs sur une ligne avec _summarise()_
+
+En fait _dplyr_ est le prolongement de _plyr_ (d pour data.frame ou data.table), il hérite ainsi d'une syntaxe plus explicite que _data.table_ et peut offrir des performances comparables.
+
+\footnotesize
+
+https://stackoverflow.com/questions/21435339/ 
+
+## Un air de SQL?
+
+Il est également possible de:
+
+* appliquer ces opérations à des données groupées par facteur ou variable avec *group_by()*
+* réaliser des jointures entre tables avec *inner_join()*, *left_join()*, *right_join()*, 
+*semi_join()*, *anti_join()*, *full_join()*.  
+
+> "...both in memory and out of memory."
+
+Car le package __dbplyr__ permet de travailler avec des bases de données distantes en utilisant cette même grammaire (et donc le même code R).
+
+__Imports__: assertthat, DBI (>= 0.5), dplyr (>= 0.5.0.9004), glue, methods, rlang (>= 0.1.0), tibble (>= 1.3.0.9007), R6, utils
+
+
+\footnotesize
+http://dplyr.tidyverse.org
+
+
+## Les tibbles
+
+Les _tibbles_ (Müller & Wickham, 2017) sont des objets similaires aux data frames. Quelques différences notables:
+
+* Ne convertit pas les types
+* N'ajuste pas les noms de variables
+* Pas de correspondance partielle sur les noms de variables
+* Evaluation paresseuse et séquentielle
+* Ne crée pas de _row.names_
+* Recycle seulement les vecteurs de longueur 1
+* N'affiche que les 10 premières lignes et un nombre de colonne qui tient dans l'écran
+* Retourne une tibble quand échantillonnée (avec '[')
+
+\footnotesize
+http://r4ds.had.co.nz/tibbles.html
+
+http://tibble.tidyverse.org/
+
+## En route!
+\footnotesize
+```{r libs, echo=TRUE, message=FALSE, warning=FALSE, results="hide"}
+library(dplyr)
+library(tibble)
+data(iris)
+```
+\footnotesize
+```{r glimpse, echo = TRUE}
+glimpse(iris)
+options(tibble.print_max = 4, tibble.print_min = 4 )
+```
+
+## Obtenir des résumés
+\footnotesize
+```{r summarise, echo=TRUE, message=FALSE, warning=FALSE}
+summarise_all(iris, funs(mean))
+summarise_if(iris, is.numeric, sd)
+summarise_at(iris, vars(Sepal.Length,Petal.Length),max)
+```
+
+## Quelques opérations utiles
+
+* Compter les observations
+
+\footnotesize
+```{r count, echo=TRUE, eval=FALSE}
+count(iris, Species)
+```
+\normalsize
+
+
+* Dédoublonner avec _distinct()_
+
+\footnotesize
+```{r distinct, echo=TRUE, eval=FALSE}
+distinct(iris, Species)
+```
+\normalsize
+
+
+* Réordonner ses observations avec _arrange()_
+
+\footnotesize
+```{r arrange, echo=TRUE, eval=FALSE}
+arrange(mtcars, desc(mpg))
+```
+\normalsize    
+
+* Ajouter des observations avec _add\_row()_
+
+\footnotesize
+```{r add_rows, echo=TRUE, eval=FALSE}
+add_row(iris, Sepal.Length = 4, Sepal.Width = 4, Petal.Length = 4, Petal.Width = 4, Species = "setosa")
+```
+\normalsize    
+
+* Ajouter des colonnes avec _add\_column()_
+
+\footnotesize
+```{r add_cols, echo=TRUE, eval=FALSE}
+add_column(iris, new = rep(letters[1:15]))
+```
+\normalsize    
+
+## Récupérer des observations aléatoirement
+\footnotesize
+```{r sample, echo = TRUE}
+sample_frac(iris, 0.04, replace = TRUE)
+sample_n(iris, 5, replace = TRUE)
+```
+
+## Récupérer des observations moins aléatoirement
+\footnotesize
+```{r filterslice, echo = TRUE}
+filter(iris, Sepal.Length>7.5)
+slice(iris, 10:15)
+```
+
+## Sélectionner des variables
+\footnotesize
+```{r select, echo = TRUE}
+select(tbl_df(iris), Sepal.Length, Species)
+select(tbl_df(iris), starts_with("Petal"))
+```
+
+\normalsize    
+D'autres fonctions auxiliaires sont fournies (_contains()_, _ends\_with()_, _matches()_, _num\_range()_, _one\_of()_, _everything()_) .
+
+
+
+## Manipuler des observations ou des variables
+\footnotesize
+```{r mutate, echo = TRUE}
+mutate(select(tbl_df(iris), starts_with("Petal")), 
+       Petal.Length.Width.Ratio = Petal.Length/Petal.Width)
+```
+
+\normalsize    
+On peut cibler les variables à modifier avec _mutate\_all_, _mutate\_at_, _mutate_\if_.
+
+## Manipuler des observations ou des variables
+\footnotesize
+```{r transmute, echo = TRUE}
+transmute(select(tbl_df(iris), starts_with("Petal")), 
+       Petal.Length.Width.Ratio = Petal.Length/Petal.Width)
+```
+
+\normalsize
+_mutate()_ et _transmute()_ implémentent des fonctions vectorisées qui retournent un vecteur de même longueur que celui fournit en entrée.
+
+## Grouper des observations
+
+  _dplyr_ peut se voir comme une spécialisation du package _plyr_ vis à vis des data frames (ou putôt des _tibbles_). Ainsi nous pouvons mettre en oeuvre une stratégie d'analyse de données de type Split-Apply-Combine en groupant nos données selon une variable :
+
+
+\footnotesize
+```{r group_by, echo = TRUE}
+group_by(tbl_df(iris), Species)
+```
+
+http://www.jstatsoft.org/v40/i01/
+
+http://had.co.nz/plyr/
+
+http://github.com/hadley/plyr
+
+## Grouper des observations
+
+\footnotesize
+```{r groupmean, echo = TRUE}
+summarise_if(group_by(tbl_df(iris), Species),is.numeric,mean)
+```
+
+\normalsize
+On peut bien sûr 'degrouper' la table
+\footnotesize
+```{r ungroup, echo = TRUE, eval = FALSE}
+ungroup(g_iris)
+```
+
+
+## L'opérateur '%>%'
+
+Un pipe, fréquemment représenté par une barre verticale '|', renvoie la sortie d'une commande vers l'entrée d'une autre. 
+
+La librairie magrittr fournit cet opérateur (et quelques autres) pour R et permet d'écrire du code différement:
+
+* la séquence d'opération se lit de gauche à droite  
+* on peut éviter l'appel de fonctions à l'intérieur d'autres fonction   
+* on peut diminuer l'usage de variables locales ou de fonction  
+* la séquence d'opération apparait très modulaire  
+
+Problème: dans R, '|' équivaut déjà à 'OR'. La librairie _magrittr_ (Bache & Wickham, 2014) fournit un pipe qui 'n'en est pas vraiment un (_"This is not a pipe"_) sous la forme '%>%'.
+
+\footnotesize
+https://github.com/tidyverse/magrittr
+
+## En pratique
+
+\normalsize
+Si nous voulons appliquer un filtre (Sepal.Length>5) sur quelques observations (10 à 15 par exemple) nous pouvons bien sûr écrire:
+
+\footnotesize
+```{r nopipe, echo=T}
+mysubset <- filter(slice(iris, 10:15), Sepal.Length>5)
+```
+\normalsize
+Mais avec l'opérateur 'pipe' on peut également noter cette transformation ainsi:
+\footnotesize
+```{r wpipe, echo=T}
+mysubset <- iris %>% slice(10:15) %>% filter(Sepal.Length>5)
+```
+\normalsize
+Et en faire autant avec des fonctions moins récentes:
+\footnotesize
+```{r auld, echo=T}
+x<-iris$Sepal.Length
+log(sum(exp(x)), exp(1))
+x %>% exp %>% sum %>% log(exp(1))
+```
+
+## Une popularité grandissante
+
+* forum, fils de discussion, blogs
+* packages récents
+    * _dplyr_
+    * _leaflet_ (cartes interactives dans _shiny_)
+    * _tidytext_ (text mining)
+    * ...
+    
+\footnotesize
+```{r leaflet, echo=TRUE, eval=FALSE}
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+```
+
+```{r tidytext, echo=TRUE, eval=FALSE}
+text_df %>% unnest_tokens(word, text)
+```
+
+## Sources et ressources
+
+\footnotesize
+
+* __dplyr__: 
+    Hadley Wickham, Romain Francois, Lionel Henry and Kirill Müller (2017). dplyr: A Grammar of Data Manipulation.
+    http://dplyr.tidyverse.org
+    https://github.com/tidyverse/dplyr
+    https://github.com/rstudio/cheatsheets/raw/master/source/pdfs/data-transformation-cheatsheet.pdf 
+    
+* __tibble__: 
+    Kirill Müller and Hadley Wickham (2017). tibble: Simple Data Frames. R package version 1.3.3.
+    https://github.com/tidyverse/tibble
+    http://r4ds.had.co.nz/tibbles.html
+    
+* __magrittr__: 
+    Stefan Milton Bache and Hadley Wickham (2014). magrittr: A Forward-Pipe Operator for R. R package version 1.5.
+    https://github.com/tidyverse/magrittr
+    http://r4ds.had.co.nz/pipes.html
+
+* Silge J and Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy Data Principles in R.” _JOSS_, *1*(3). doi:
+10.21105/joss.00037. http://tidytextmining.com/
+    
+* Joe Cheng, Bhaskar Karambelkar and Yihui Xie (2017). leaflet: Create Interactive Web Maps with the JavaScript 'Leaflet' Library. R package version 1.1.0.9000. https://rstudio.github.io/leaflet/
